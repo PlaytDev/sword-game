@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검 강화하기</title>
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4ee;
+    --bg-tertiary: #ebeae3;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
+    --text-info: #185fa5;
+    --text-success: #3b6d11;
+    --text-warning: #854f0b;
+    --text-danger: #a32d2d;
+    --border-tertiary: rgba(0,0,0,0.12);
+    --border-secondary: rgba(0,0,0,0.25);
+    --border-info: #378add;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1f1f1d;
+      --bg-secondary: #2a2a28;
+      --bg-tertiary: #18181a;
+      --bg-info: #0c447c;
+      --bg-success: #27500a;
+      --bg-warning: #633806;
+      --bg-danger: #791f1f;
+      --text-primary: #f0eee8;
+      --text-secondary: #b4b2a9;
+      --text-tertiary: #888780;
+      --text-info: #b5d4f4;
+      --text-success: #c0dd97;
+      --text-warning: #fac775;
+      --text-danger: #f7c1c1;
+      --border-tertiary: rgba(255,255,255,0.15);
+      --border-secondary: rgba(255,255,255,0.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 1rem;
+    line-height: 1.6;
+  }
+  .container { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 1rem; text-align: center; }
+  button {
+    font-family: inherit;
+    background: transparent;
+    border: 0.5px solid var(--border-secondary);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 14px;
+  }
+  button:hover:not(:disabled) { background: var(--bg-secondary); }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .stat-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1rem; }
+  .stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 500; }
+  .panel {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .panel-title { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; margin-bottom: 12px; }
+  .info-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 8px; text-align: center; }
+  .info-card-label { color: var(--text-secondary); font-size: 12px; }
+  .info-card-value { font-weight: 500; margin-top: 2px; }
+  .protect-info {
+    background: var(--bg-info);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-info);
+    text-align: center;
+  }
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .action-grid button { padding: 10px; }
+  .shop-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .shop-grid button { padding: 10px 6px; font-size: 13px; line-height: 1.4; }
+  .warp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .warp-btn {
+    padding: 10px 6px !important;
+    font-size: 12px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.3;
+  }
+  .warp-btn .label { font-weight: 500; }
+  .warp-btn .sub { color: var(--text-secondary); font-size: 11px; }
+  #log-area {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  }
+  .log-entry { font-size: 13px; padding: 4px 0; border-bottom: 0.5px solid var(--border-tertiary); }
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-bg.show { display: flex; }
+  .modal-box {
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    max-width: 400px;
+    width: 90%;
+    margin: 1rem;
+  }
+  .slot {
+    position: relative;
+    border: 1px dashed var(--border-tertiary);
+    border-radius: var(--radius-md);
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 4px;
+    overflow: hidden;
+    background: var(--bg-primary);
+  }
+  .slot-content { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 0; }
+  .slot-content img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  #customizer-grid {
+    display: none;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  #bulk-zone {
+    border: 2px dashed var(--border-secondary);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .footer { text-align: center; font-size: 12px; color: var(--text-tertiary); margin-top: 2rem; padding: 1rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚔ 검 강화하기</h1>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">보유 자본</div>
+      <div class="stat-value" id="gold-display">1,000,000원</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">방지권</div>
+      <div class="stat-value" id="ticket-display">0개</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+      <div style="width: 100px; height: 140px; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;" id="sword-art"></div>
+      <div style="flex: 1;">
+        <div style="font-size: 13px; color: var(--text-secondary);" id="grade-display">+0강</div>
+        <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;" id="sword-display">낡은 단검</div>
+        <div style="font-size: 13px; color: var(--text-secondary);">성공 확률</div>
+        <div style="font-size: 22px; font-weight: 500;" id="rate-display">100%</div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-card-label">강화 비용</div>
+        <div class="info-card-value" id="cost-display">-</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-label">판매가</div>
+        <div class="info-card-value" id="sell-display">-</div>
+      </div>
+    </div>
+
+    <div class="action-grid">
+      <button id="btn-enhance">강화하기</button>
+      <button id="btn-sell">판매</button>
+    </div>
+
+    <div class="protect-info" id="protect-info" style="display: none;">
+      파괴 시 방지권 <span id="req-tickets">1</span>개 소모하여 보호 가능
+    </div>
+  </div>
+
+  <div id="log-area">
+    <div class="log-entry" style="color: var(--text-secondary); border: none;">대장간에 오신 것을 환영합니다.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">상점 - 방지권</div>
+    <div class="shop-grid">
+      <button id="btn-buy-ticket-1">1개<br><span style="color: var(--text-secondary); font-size: 11px;">10만원</span></button>
+      <button id="btn-buy-ticket-10">10개<br><span style="color: var(--text-secondary); font-size: 11px;">95만원</span></button>
+      <button id="btn-buy-ticket-100">100개<br><span style="color: var(--text-secondary); font-size: 11px;">900만원</span></button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">상점 - 워프권 (확정)</div>
+    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">+0강에서 해당 등급으로 즉시 워프</div>
+    <div class="warp-grid" id="warp-buttons"></div>
+  </div>
+
+  <div class="panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <div>
+        <div class="panel-title" style="margin-bottom: 0;">검 이미지 커스터마이징</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">슬롯에 이미지 드롭/클릭 업로드. 데이터는 브라우저에 저장됩니다.</div>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button id="btn-toggle-customizer" style="padding: 6px 12px; font-size: 12px;">펼치기</button>
+        <button id="btn-reset-images" style="padding: 6px 12px; font-size: 12px;">초기화</button>
+      </div>
+    </div>
+    <div id="bulk-zone">
+      <div style="font-size: 13px; font-weight: 500; margin-bottom: 4px;">일괄 업로드</div>
+      <div style="font-size: 12px; color: var(--text-secondary);">파일명에 강 번호(0~50) 포함 시 자동 매핑</div>
+      <input type="file" id="bulk-input" accept="image/*" multiple style="display: none;">
+    </div>
+    <div id="customizer-grid"></div>
+  </div>
+
+  <div class="footer">검 강화 게임 v1.3 · 데이터는 자동 저장됩니다</div>
+</div>
+
+<div id="protect-modal-bg" class="modal-bg">
+  <div class="modal-box">
+    <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px; color: var(--text-danger);">검이 파괴되려고 합니다!</div>
+    <div style="font-size: 14px; margin-bottom: 16px;" id="modal-msg">파괴 직전</div>
+    <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px; font-size: 13px;">
+      보호하려면 <span style="font-weight: 500;" id="modal-req">1</span>개의 방지권이 필요합니다.<br>
+      보유: <span id="modal-have">0</span>개
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <button id="modal-use" style="padding: 10px;">방지권 사용</button>
+      <button id="modal-skip" style="padding: 10px;">파괴 수용</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'sword_enhance_save_v1';
+const IMAGES_KEY = 'sword_enhance_images_v1';
+
+const TICKET_PRICE_1 = 100000;
+const TICKET_PRICE_10 = 950000;
+const TICKET_PRICE_100 = 9000000;
+
+// 재기 보너스 기준값: 0강 강화비용과 동일
+const REBOUND_FLOOR = 500;
+
+function smartRound(n) {
+  if (n < 1) return 0;
+  if (n < 1e4)  return Math.round(n / 100) * 100;
+  if (n < 1e5)  return Math.round(n / 1000) * 1000;
+  if (n < 1e7)  return Math.round(n / 1e4) * 1e4;
+  if (n < 1e9)  return Math.round(n / 1e5) * 1e5;
+  if (n < 1e12) return Math.round(n / 1e7) * 1e7;
+  return Math.round(n / 1e10) * 1e10;
+}
+
+function buildSwords() {
+  const names = [
+    '낡은 단검','쓸만한 단검','강화한 단검','단단한 검','연마된 검',
+    '바이킹 소드','롱소드','클레이모어','불타는 검','냉기의 소드',
+    '양날검','마력의 검','은빛 레이피어','타우스워드','현광검',
+    '피무름검','파라바츠','데모닉 블레이드','루나틱 엣지','솔라 세이버',
+    '화염의 쌍검','폭풍의 검','심판자','날렵한 용검','드래곤슬레이어',
+    '템페스트 골드','블러드 문','이클립스','불꽃 마검','심연의 검',
+    '마검 아포피스','발할라','데몬 베트렉스','발키리','니플헤임',
+    '왕푸야샤','샤프 워커','이그드라실','오딘의 창','제우스의 번개',
+    '아폴로의 활','아테나의 방패','크로노스','우라노스','가이아',
+    '카오스','코스모스','인피니티','이터널','싱귤래리티','엔딩의 검'
+  ];
+  const colors = [
+    '#888780','#888780','#5F5E5A','#5F5E5A','#444441',
+    '#378ADD','#378ADD','#185FA5','#D85A30','#85B7EB',
+    '#7F77DD','#7F77DD','#B4B2A9','#534AB7','#5DCAA5',
+    '#A32D2D','#1D9E75','#3C3489','#26215C','#FAC775',
+    '#D85A30','#5DCAA5','#993556','#0F6E56','#993C1D',
+    '#EF9F27','#A32D2D','#534AB7','#BA7517','#28215C',
+    '#993556','#185FA5','#72243E','#7F77DD','#3C3489',
+    '#3C3489','#26215C','#0F6E56','#26215C','#EF9F27',
+    '#FAC775','#185FA5','#534AB7','#3C3489','#1D9E75',
+    '#26215C','#3C3489','#534AB7','#185FA5','#EF9F27','#EF9F27'
+  ];
+  const arr = [];
+  let cost = 500;
+  for (let i = 0; i <= 50; i++) {
+    let rate;
+    if (i < 5)       rate = 100;
+    else if (i < 10) rate = 100 - (i - 5) * 2;
+    else if (i < 15) rate = 90 - (i - 10) * 2;
+    else if (i < 25) rate = 80 - (i - 15) * 1.5;
+    else if (i < 35) rate = 65 - (i - 25) * 1.5;
+    else if (i < 45) rate = 50 - (i - 35) * 1.5;
+    else if (i < 50) rate = 35 - (i - 45) * 1.5;
+    else             rate = 100;
+
+    const breakable = i >= 1 && i < 50;
+    const mult = i < 10 ? 1.5 : i < 25 ? 1.85 : i < 40 ? 2.1 : 2.3;
+    const sellMult = i < 5 ? 5.0 : i < 15 ? 3.5 : 2.5;
+
+    let rawCost = i === 50 ? 0 : cost;
+    let rawSell = cost * sellMult;
+    let roundedCost = smartRound(rawCost);
+    let roundedSell = smartRound(rawSell);
+
+    if (i !== 50 && roundedSell <= roundedCost * 1.5) {
+      roundedSell = smartRound(roundedCost * 2);
+    }
+
+    // 0강은 판매 불가 - 판매가 0
+    if (i === 0) roundedSell = 0;
+
+    let reqTickets = 0;
+    if (breakable) {
+      const failRate = (100 - rate) / 100;
+      const tierBoost = 1 + (i / 49) * 4;
+      reqTickets = Math.max(1, Math.ceil(failRate * tierBoost * 5));
+    }
+
+    arr.push({
+      name: names[i],
+      rate: Math.round(rate * 10) / 10,
+      cost: roundedCost,
+      sell: roundedSell,
+      breakable,
+      reqTickets,
+      color: colors[i],
+      tier: Math.min(8, Math.floor(i / 6))
+    });
+    cost *= mult;
+  }
+  return arr;
+}
+const swords = buildSwords();
+
+function buildWarps() {
+  const targets = [5, 10, 15, 20, 25, 30, 35, 40, 45];
+  return targets.map(t => {
+    let accum = 0;
+    for (let i = 0; i < t; i++) {
+      const s = swords[i];
+      const expected = s.cost / (s.rate / 100);
+      const penalty = s.breakable ? 1.6 : 1.0;
+      accum += expected * penalty;
+    }
+    let warpCost = smartRound(accum * 2);
+    const targetSell = swords[t].sell;
+    if (warpCost <= targetSell * 1.5) {
+      warpCost = smartRound(targetSell * 2);
+    }
+    return { target: t, cost: warpCost, label: '+' + t + '강 워프' };
+  });
+}
+const warpScrolls = buildWarps();
+
+let gold = 1000000;
+let tickets = 0;
+let grade = 0;
+let customImages = {};
+let pendingDestroy = null;
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ gold, tickets, grade })); }
+  catch (e) { console.error(e); }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      gold = s.gold ?? 1000000;
+      tickets = s.tickets ?? 0;
+      grade = s.grade ?? 0;
+    }
+    const imgRaw = localStorage.getItem(IMAGES_KEY);
+    if (imgRaw) customImages = JSON.parse(imgRaw);
+  } catch (e) { console.error(e); }
+}
+function saveImages() {
+  try { localStorage.setItem(IMAGES_KEY, JSON.stringify(customImages)); }
+  catch (e) { log('이미지 저장 실패. 용량 한계일 수 있습니다.', 'var(--text-danger)'); }
+}
+
+const $ = (id) => document.getElementById(id);
+
+function fmtMoney(n) {
+  if (n === 0) return '0원';
+  if (n >= 1e12) return (n / 1e12).toFixed(2) + '조원';
+  if (n >= 1e8)  return (n / 1e8).toFixed(2) + '억원';
+  return Math.round(n).toLocaleString('ko-KR') + '원';
+}
+
+function log(msg, color) {
+  const area = $('log-area');
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  if (color) div.style.color = color;
+  div.textContent = msg;
+  area.insertBefore(div, area.firstChild);
+  while (area.children.length > 30) area.removeChild(area.lastChild);
+}
+
+// 재기 보너스 체크: 0강이면서 강화 비용도 못 낼 정도로 빈털터리면 자본 보충
+function checkRebound() {
+  if (grade === 0 && gold < REBOUND_FLOOR) {
+    const refill = REBOUND_FLOOR - gold;
+    gold = REBOUND_FLOOR;
+    log(`재기 보너스: +${fmtMoney(refill)} 지급됨.`, 'var(--text-warning)');
+    saveState();
+  }
+}
+
+function renderDefaultSwordSvg(s) {
+  const tier = s.tier, c = s.color;
+  const bladeY = 90 - tier * 4, bladeW = 12 + tier * 1.2;
+  const guardW = 30 + tier * 3, pommelR = 5 + tier * 0.6;
+  const aura = tier >= 5 ? `<ellipse cx="50" cy="80" rx="38" ry="58" fill="${c}" opacity="0.15"/>` : '';
+  const gem = tier >= 3 ? `<circle cx="50" cy="105" r="3" fill="${c}" opacity="0.9"/>` : '';
+  const ending = tier >= 8 ? `<ellipse cx="50" cy="80" rx="42" ry="62" fill="#EF9F27" opacity="0.25"/><circle cx="50" cy="${bladeY + 5}" r="4" fill="#FAEEDA"/>` : '';
+  return `<svg viewBox="0 0 100 140" width="100" height="140" xmlns="http://www.w3.org/2000/svg">${aura}${ending}<polygon points="${50 - bladeW/2},100 ${50 + bladeW/2},100 50,${bladeY}" fill="${c}" opacity="0.9"/><line x1="50" y1="${bladeY}" x2="50" y2="100" stroke="#FFF" stroke-width="0.8" opacity="0.5"/><rect x="${50 - guardW/2}" y="100" width="${guardW}" height="5" fill="#5F5E5A" rx="1"/><rect x="47" y="105" width="6" height="18" fill="#412402"/><circle cx="50" cy="125" r="${pommelR}" fill="#888780"/>${gem}</svg>`;
+}
+
+function renderSwordArt(idx) {
+  if (customImages[idx]) {
+    return `<img src="${customImages[idx]}" alt="" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+  }
+  return renderDefaultSwordSvg(swords[idx]);
+}
+
+function renderCustomizerGrid() {
+  const grid = $('customizer-grid');
+  grid.innerHTML = swords.map((s, i) => `
+    <div class="slot" data-idx="${i}">
+      <div class="slot-content"></div>
+      <div style="font-size: 10px; font-weight: 500; margin-top: 2px;">+${i}</div>
+      <input type="file" class="slot-input" accept="image/*" style="display: none;">
+    </div>
+  `).join('');
+  grid.querySelectorAll('.slot').forEach(slot => {
+    const idx = parseInt(slot.dataset.idx);
+    const input = slot.querySelector('.slot-input');
+    const content = slot.querySelector('.slot-content');
+    const updateContent = () => {
+      if (customImages[idx]) {
+        content.innerHTML = `<img src="${customImages[idx]}">`;
+        slot.style.borderStyle = 'solid';
+      } else {
+        content.innerHTML = `<div style="transform: scale(0.4); transform-origin: center;">${renderDefaultSwordSvg(swords[idx])}</div>`;
+        slot.style.borderStyle = 'dashed';
+      }
+    };
+    updateContent();
+    slot._update = updateContent;
+    slot.onclick = (e) => { if (e.target !== input) input.click(); };
+    input.onchange = (e) => { if (e.target.files[0]) loadImageFile(e.target.files[0], idx); };
+    slot.ondragover = (e) => { e.preventDefault(); slot.style.background = 'var(--bg-info)'; };
+    slot.ondragleave = () => { slot.style.background = ''; };
+    slot.ondrop = (e) => {
+      e.preventDefault(); slot.style.background = '';
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) loadImageFile(f, idx);
+    };
+  });
+}
+
+function updateSlot(idx) {
+  const slot = document.querySelector(`.slot[data-idx="${idx}"]`);
+  if (slot && slot._update) slot._update();
+}
+
+function loadImageFile(file, idx) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    customImages[idx] = e.target.result;
+    saveImages();
+    updateSlot(idx);
+    if (grade === idx) render();
+    log(`+${idx}강 ${swords[idx].name} 이미지 등록.`, 'var(--text-success)');
+  };
+  reader.readAsDataURL(file);
+}
+
+function bulkUpload(files) {
+  const arr = Array.from(files);
+  let mapped = 0;
+  arr.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const match = file.name.match(/(\d{1,2})/);
+    if (match) {
+      const idx = parseInt(match[1]);
+      if (idx >= 0 && idx <= 50) { loadImageFile(file, idx); mapped++; }
+    }
+  });
+  log(`일괄 업로드: ${mapped}/${arr.length}개 매핑됨.`, 'var(--text-info)');
+}
+
+function renderWarpButtons() {
+  const container = $('warp-buttons');
+  container.innerHTML = warpScrolls.map((w, i) => `
+    <button class="warp-btn" data-idx="${i}">
+      <span class="label">${w.label}</span>
+      <span class="sub">${fmtMoney(w.cost)}</span>
+    </button>
+  `).join('');
+  container.querySelectorAll('.warp-btn').forEach(btn => {
+    btn.onclick = () => useWarp(parseInt(btn.dataset.idx));
+  });
+}
+
+function useWarp(idx) {
+  const w = warpScrolls[idx];
+  if (gold < w.cost) { log('자본이 부족합니다.', 'var(--text-danger)'); return; }
+  if (grade !== 0) { log('워프권은 +0강에서만 사용 가능합니다.', 'var(--text-warning)'); return; }
+  gold -= w.cost;
+  grade = w.target;
+  log(`워프 → +${grade}강 ${swords[grade].name}`, 'var(--text-success)');
+  saveState();
+  render();
+}
+
+function showDestroyModal(reqTickets) {
+  const s = swords[grade];
+  $('modal-msg').textContent = `+${grade}강 ${s.name}이(가) 파괴되려 합니다.`;
+  $('modal-req').textContent = reqTickets;
+  $('modal-have').textContent = tickets;
+  $('modal-use').disabled = tickets < reqTickets;
+  $('protect-modal-bg').classList.add('show');
+  pendingDestroy = { reqTickets };
+}
+
+function closeDestroyModal() {
+  $('protect-modal-bg').classList.remove('show');
+  pendingDestroy = null;
+}
+
+$('modal-use').onclick = () => {
+  if (!pendingDestroy) return;
+  const req = pendingDestroy.reqTickets;
+  if (tickets < req) return;
+  tickets -= req;
+  log(`방지권 ${req}개 사용. +${grade}강 보호됨.`, 'var(--text-info)');
+  closeDestroyModal();
+  saveState();
+  render();
+};
+
+$('modal-skip').onclick = () => {
+  if (!pendingDestroy) return;
+  const s = swords[grade];
+  log(`+${grade}강 ${s.name} 파괴됨...`, 'var(--text-danger)');
+  grade = 0;
+  closeDestroyModal();
+  checkRebound();
+  saveState();
+  render();
+};
+
+function render() {
+  const s = swords[grade];
+  $('gold-display').textContent = fmtMoney(gold);
+  $('ticket-display').textContent = tickets + '개';
+  $('grade-display').textContent = '+' + grade + '강';
+  $('sword-display').textContent = s.name;
+  $('sword-art').innerHTML = renderSwordArt(grade);
+
+  if (grade >= swords.length - 1) {
+    $('rate-display').textContent = '엔딩!';
+    $('cost-display').textContent = '-';
+    $('sell-display').textContent = fmtMoney(s.sell);
+    $('btn-enhance').disabled = true;
+    $('btn-sell').disabled = false;
+    $('protect-info').style.display = 'none';
+  } else {
+    $('rate-display').textContent = s.rate + '%';
+    $('cost-display').textContent = fmtMoney(s.cost);
+    $('sell-display').textContent = grade === 0 ? '판매 불가' : fmtMoney(s.sell);
+    $('btn-enhance').disabled = gold < s.cost;
+    $('btn-sell').disabled = grade === 0;
+    if (s.breakable) {
+      $('protect-info').style.display = 'block';
+      $('req-tickets').textContent = s.reqTickets;
+    } else {
+      $('protect-info').style.display = 'none';
+    }
+  }
+
+  $('btn-buy-ticket-1').disabled = gold < TICKET_PRICE_1;
+  $('btn-buy-ticket-10').disabled = gold < TICKET_PRICE_10;
+  $('btn-buy-ticket-100').disabled = gold < TICKET_PRICE_100;
+  document.querySelectorAll('.warp-btn').forEach((btn, i) => {
+    btn.disabled = gold < warpScrolls[i].cost || grade !== 0;
+  });
+}
+
+$('btn-enhance').onclick = () => {
+  if (pendingDestroy) return;
+  const s = swords[grade];
+  if (gold < s.cost) { log('자본이 부족합니다.', 'var(--text-danger)'); return; }
+  gold -= s.cost;
+  if (Math.random() * 100 < s.rate) {
+    grade++;
+    log('강화 성공! → +' + grade + '강 ' + swords[grade].name, 'var(--text-success)');
+    saveState();
+    render();
+  } else {
+    saveState();
+    render();
+    showDestroyModal(s.reqTickets);
+  }
+};
+
+$('btn-sell').onclick = () => {
+  if (pendingDestroy) return;
+  if (grade === 0) return;  // 0강 판매 차단
+  const s = swords[grade];
+  gold += s.sell;
+  log(s.name + ' 판매 → +' + fmtMoney(s.sell), 'var(--text-success)');
+  grade = 0;
+  saveState();
+  render();
+};
+
+$('btn-buy-ticket-1').onclick = () => {
+  if (gold < TICKET_PRICE_1) return;
+  gold -= TICKET_PRICE_1; tickets++;
+  log('방지권 1개 구매.', 'var(--text-info)');
+  saveState();
+  render();
+};
+
+$('btn-buy-ticket-10').onclick = () => {
+  if (gold < TICKET_PRICE_10) return;
+  gold -= TICKET_PRICE_10; tickets += 10;
+  log('방지권 10개 구매.', 'var(--text-info)');
+  saveState();
+  render();
+};
+
+$('btn-buy-ticket-100').onclick = () => {
+  if (gold < TICKET_PRICE_100) return;
+  gold -= TICKET_PRICE_100; tickets += 100;
+  log('방지권 100개 구매.', 'var(--text-info)');
+  saveState();
+  render();
+};
+
+const bulkZone = $('bulk-zone');
+const bulkInput = $('bulk-input');
+bulkZone.onclick = () => bulkInput.click();
+bulkInput.onchange = (e) => bulkUpload(e.target.files);
+bulkZone.ondragover = (e) => { e.preventDefault(); bulkZone.style.background = 'var(--bg-info)'; };
+bulkZone.ondragleave = () => { bulkZone.style.background = ''; };
+bulkZone.ondrop = (e) => {
+  e.preventDefault(); bulkZone.style.background = '';
+  bulkUpload(e.dataTransfer.files);
+};
+
+$('btn-toggle-customizer').onclick = () => {
+  const grid = $('customizer-grid');
+  const open = grid.style.display === 'grid';
+  grid.style.display = open ? 'none' : 'grid';
+  $('btn-toggle-customizer').textContent = open ? '펼치기' : '접기';
+};
+
+$('btn-reset-images').onclick = () => {
+  if (!confirm('등록한 모든 이미지를 삭제할까요?')) return;
+  customImages = {};
+  saveImages();
+  document.querySelectorAll('.slot').forEach(s => s._update && s._update());
+  render();
+  log('모든 커스텀 이미지를 초기화했습니다.', 'var(--text-warning)');
+};
+
+loadState();
+checkRebound();  // 페이지 로드 시에도 체크
+renderWarpButtons();
+renderCustomizerGrid();
+render();
+</script>
+</body>
+</html>
